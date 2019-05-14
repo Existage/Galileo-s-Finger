@@ -50,8 +50,8 @@ MICROSTEPS = {1: (0, 0, 0),
 	      
 class laser():
     def __init__(self):
-        self.azimuth = 0
-        self.altitude = (-180 * MS)
+        self.azimuth = 0 #steps
+        self.altitude = (0) #steps
     
         GPIO.cleanup()
         GPIO.setmode(GPIO.BCM)
@@ -91,34 +91,34 @@ class laser():
             GPIO.output(DIRx, CW)
             self.step(STEPx, moveStepsx)
             print("Done moving Azimuth")
-            self.azimuth = desiredPos
+            self.azimuth += moveStepsx
 		    
         else:
             GPIO.output(DIRx, CCW)
             self.step(STEPx, (-1 * moveStepsx))
             print("Done moving Azimuth")
-            self.azimuth = desiredPos
+            self.azimuth += moveStepsx
     
     
     def moveAlt(self, desiredPos): #desiredPos should be value of degrees required from 0 point
 	    
-        moveStepsy = int(self.DegToSteps(desiredPos) - self.altitude)
+        moveStepsy = int(self.DegToSteps(desiredPos + 90) - self.altitude)
         if moveStepsy >= 0:
-            GPIO.output(DIRy, CW)
+            GPIO.output(DIRy, CCW)
             self.step(STEPy, moveStepsy)
             print("Done moving Altitude")
-            self.altitude = desiredPos
+            self.altitude += moveStepsy
 		    
         else:
-            GPIO.output(DIRy, CCW)
+            GPIO.output(DIRy, CW)
             self.step(STEPy, (-1 * moveStepsy))
             print("Done moving Altitude")
-            self.altitude = desiredPos
+            self.altitude += moveStepsy
     
     def shutdownSteppers(self):
         print("Shutting Down")
         self.moveAz(0)
-        self.moveAlt(-180*MS)
+        self.moveAlt(-90)
         GPIO.cleanup()
         print("Done")
 	
