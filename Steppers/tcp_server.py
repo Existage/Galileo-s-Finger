@@ -34,7 +34,7 @@ listening_socket.listen(5)
 current_position = []
 
 #initialise steppers
-laser.init()
+las = laser.laser()
 
 #add the objects for ephem
 ct = ephem.city('Cape Town')
@@ -97,8 +97,10 @@ def toDeg(dataIn): #data should be string of body az or alt
 	return out
 
 def Move(az, alt):
-	laser.moveAz(laser.DegToSteps(az))
-	laser.moveAlt(laser.DegToSteps(alt))
+    print(az)
+    print(alt)
+    las.moveAz(float(az))
+    las.moveAlt(float(alt))
 	
 	
 #NB: The methods makes 2 assumptions
@@ -144,12 +146,10 @@ while True:
             #print(len(data))
             #print(struct.calcsize("3iIi"))
             #print(data)
-            if data == "":
-                open_sockets.remove(i)
-                laser.shutdownSteppers()
-                print ("Connection closed")
+            
                 
-            else:
+                
+            try:
                 print(repr(data))
                 data = struct.unpack("3iIi", data)
                 print("%x, %o" % (data[3], data[3]))
@@ -174,3 +174,7 @@ while True:
                 print (repr(reply))
                 print()
                 i.send(reply)
+            except:
+                open_sockets.remove(i)
+                las.shutdownSteppers()
+                print ("Connection closed")

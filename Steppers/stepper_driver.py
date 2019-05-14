@@ -25,8 +25,7 @@
 from time import sleep
 import RPi.GPIO as GPIO
 
-GPIO.cleanup()
-GPIO.setmode(GPIO.BCM)
+
 
 DELAY = 0.001 #delay between step commands
 DIRx = 24 #gpio pin for direction x
@@ -39,9 +38,6 @@ SPR = 200 #steps per rotation on full step
 MODE = (14,15,18)
 MS = 32
 
-azimuth = 0 #memory of x axis in steps
-altitude = (-180 * MS)    #memory of y axis in steps
-
 MICROSTEPS = {1: (0, 0, 0),
 	      2: (1, 0, 0),
 	      4: (0, 1, 0),
@@ -51,97 +47,80 @@ MICROSTEPS = {1: (0, 0, 0),
 	      128: (0, 1, 1),
 	      256: (1, 1, 1)
 	      }
-
-def init():
+	      
+class laser():
+    def __init__(self):
+        self.azimuth = 0
+        self.altitude = (-180 * MS)
     
-    DELAY = 0.001 #delay between step commands
-    DIRx = 24 #gpio pin for direction x
-    STEPx = 23 #gpio pin for step x
-    DIRy = 8 #gpio pin for direction y
-    STEPy = 25 #gpio pin for step y
-    CW = 1 #clockwise direction
-    CCW = 0 #counter clockwise direction
-    SPR = 200 #steps per rotation on full step
-    MODE = (14,15,18)
-    MS = 32
-    
-    azimuth = 0 #memory of x axis in steps
-    altitude = (-180 * MS)    #memory of y axis in steps
-    
-    MICROSTEPS = {1: (0, 0, 0),
-		  2: (1, 0, 0),
-		  4: (0, 1, 0),
-		  8: (1, 1, 0),
-		  16: (0, 0, 1),
-		  32: (1, 0, 1),
-		  128: (0, 1, 1),
-		  256: (1, 1, 1)
-		  }
-	
+        GPIO.cleanup()
+        GPIO.setmode(GPIO.BCM)
+        GPIO.setup(DIRx, GPIO.OUT)
+        GPIO.setup(STEPx, GPIO.OUT)
+        GPIO.setup(DIRy, GPIO.OUT)
+        GPIO.setup(STEPy, GPIO.OUT)
+        for x in range(3): #sets mode pins
+            GPIO.setup(MODE[x], GPIO.OUT)
+            GPIO.output(MODE[x],MICROSTEPS[MS][x])
+        print('Initialized')
 	
     
-    GPIO.setup(DIRx, GPIO.OUT)
-    GPIO.setup(STEPx, GPIO.OUT)
-    GPIO.setup(DIRy, GPIO.OUT)
-    GPIO.setup(STEPy, GPIO.OUT)
-    print('Initialized')
     
     
-for x in range(3): #sets mode pins
-	GPIO.setup(MODE[x], GPIO.OUT)
-	GPIO.output(MODE[x],MICROSTEPS[MS][x])
 
-def DegToSteps(deg): #spr = steps per rotation, microstep = number of microsteps, deg = degrees
-    ratio = (SPR * MS)/float(360)
-    #print(ratio)
-    steps = ratio * deg
-    #print(steps)
-    return int(steps)
 
-def step(stepPin , steps): 
-	
-	for i in range(steps):
-		GPIO.output(stepPin, GPIO.HIGH)
-		sleep(DELAY)
-		GPIO.output(stepPin, GPIO.LOW)
-		sleep(DELAY)
+    def DegToSteps(self, deg): #spr = steps per rotation, microstep = number of microsteps, deg = degrees
+        ratio = (SPR * MS)/float(360)
+	#print(ratio)
+        steps = ratio * deg
+	#print(steps)
+        return int(steps)
+
+    def step(self,stepPin , steps): 
+        for i in range(steps):
+            GPIO.output(stepPin, GPIO.HIGH)
+            sleep(DELAY)
+            GPIO.output(stepPin, GPIO.LOW)
+            sleep(DELAY)
 		
 
-def moveAz(desiredPos): #desiredPos should be value of steps (int) required from 0 point
-	moveStepsx = int(desiredPos - azimuth)
-	if moveSteps >= 0:
-		GPIO.output(DIRx, CW)
-		step(STEPx, moveStepsx)
-		print("Done moving Azimuth")
-		azimuth = desiredPos
-		
-	else:
-		GPIO.output(DIRx, CCW)
-		step(STEPx, (-1 * moveStepsx))
-		print("Done moving Azimuth")
-		azimuth = desiredPos
-
-
-def moveAlt(desiredPos): #desiredPos should be value of steps (int) required from 0 point
-	moveStepsy = int(desiredPos - altitude)
-	if moveSteps >= 0:
-		GPIO.output(DIRy, CW)
-		step(STEPy, moveStepsy)
-		print("Done moving Altitude")
-		altitude = desiredPos
-		
-	else:
-		GPIO.output(DIRy, CCW)
-		step(STEPy, (-1 * moveStepsy))
-		print("Done moving Altitude")
-		altitude = desiredPos
-
-def shutdownSteppers():
-	Print("Shutting Down")
-	moveAz(0)
-	moveElev((-180*MS))
-	GPIO.cleanup()
-	Print("Done")
+    def moveAz(self, desiredPos): #desiredPos should be value of degrees required from 0 point
+	    
+        moveStepsx = int(self.DegToSteps(desiredPos) - self.azimuth)
+        if moveStepsx >= 0:
+            GPIO.output(DIRx, CW)
+            self.step(STEPx, moveStepsx)
+            print("Done moving Azimuth")
+            self.azimuth = desiredPos
+		    
+        else:
+            GPIO.output(DIRx, CCW)
+            self.step(STEPx, (-1 * moveStepsx))
+            print("Done moving Azimuth")
+            self.azimuth = desiredPos
+    
+    
+    def moveAlt(self, desiredPos): #desiredPos should be value of degrees required from 0 point
+	    
+        moveStepsy = int(self.DegToSteps(desiredPos) - self.altitude)
+        if moveStepsy >= 0:
+            GPIO.output(DIRy, CW)
+            self.step(STEPy, moveStepsy)
+            print("Done moving Altitude")
+            self.altitude = desiredPos
+		    
+        else:
+            GPIO.output(DIRy, CCW)
+            self.step(STEPy, (-1 * moveStepsy))
+            print("Done moving Altitude")
+            self.altitude = desiredPos
+    
+    def shutdownSteppers(self):
+        print("Shutting Down")
+        self.moveAz(0)
+        self.moveAlt(-180*MS)
+        GPIO.cleanup()
+        print("Done")
 	
 	
 # def main(args):
