@@ -37,6 +37,8 @@ CCW = 0 #counter clockwise direction
 SPR = 200 #steps per rotation on full step
 MODE = (14,15,18)
 MS = 32
+LASER_LED = 21 #Laser led indicator
+LASER = 20 #Laser power
 
 MICROSTEPS = {1: (0, 0, 0),
 	      2: (1, 0, 0),
@@ -66,7 +68,13 @@ class laser():
 	
     
     
-    
+    def Laser_power(self, power): #Switches laser and indicator led on and off
+        if power == True:
+            GPIO.output(LASER, GPIO.HIGH)
+            GPIO.output(LASER_LED, GPIO.HIGH)
+        else:
+            GPIO.output(LASER, GPIO.LOW)
+            GPIO.output(LASER_LED, GPIO.LOW)
 
 
     def DegToSteps(self, deg): #spr = steps per rotation, microstep = number of microsteps, deg = degrees
@@ -79,8 +87,10 @@ class laser():
     def step(self,stepPin , steps): 
         for i in range(steps):
             GPIO.output(stepPin, GPIO.HIGH)
+            GPIO.output(LASER_LED, GPIO.HIGH)
             sleep(DELAY)
             GPIO.output(stepPin, GPIO.LOW)
+            GPIO.output(LASER_LED, GPIO.LOW)
             sleep(DELAY)
 		
 

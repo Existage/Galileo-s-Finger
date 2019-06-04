@@ -99,9 +99,10 @@ def toDeg(dataIn): #data should be string of body az or alt
 def Move(az, alt):
     print(az)
     print(alt)
+    las.Laser_power(False)
     las.moveAz(float(az))
     las.moveAlt(float(alt))
-	
+	las.Laser_power(True)
 	
 #NB: The methods makes 2 assumptions
 #1) The motor steps 1.8 degrees,
